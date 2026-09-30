@@ -2,11 +2,14 @@
 
 A full-stack blog/CMS platform — a REST API plus a working browser frontend — where users can register, log in, publish posts, and comment on each other's posts. Built with **Node.js + Express** and a **vanilla HTML/CSS/JS frontend**, deployed as an always-on web service on **Render**, backed by **PostgreSQL (Neon, or Render's own managed Postgres)** via **Prisma ORM**, secured with **JWT authentication**.
 
-🔗 **Live API:** `<ADD YOUR RENDER URL HERE>`
-📬 **Public Postman Workspace (click "Send" on any request to see live results):** `<ADD YOUR POSTMAN PUBLIC WORKSPACE LINK HERE>`
-🖥️ **GitHub Repo:** `<ADD YOUR GITHUB REPO LINK HERE>`
+🔗 **Live API:** `<https://blogcms-api-port-folio.onrender.com>`
+📬 **Public Postman Workspace (click "Send" on any request to see live results):** `<https://documenter.getpostman.com/view/58450852/2sBYB4KSHE>`
+🖥️ **GitHub Repo:** `<https://github.com/FxAdmiral/port-folio.git>`
 
 > **Note on cold starts:** if you deployed on Render's free tier, the service sleeps after ~15 minutes of inactivity and the first request can take 30-50 seconds to wake it up. If you're sending this link to recruiters, either upgrade off the free tier or send a "wake-up" request a minute before sharing the Postman link.
+
+> ### 👋 If you're a recruiter or reviewer
+> You can test every API endpoint live, right now, with zero setup: open the **Public Postman Workspace** link above, and click **Send** on any request — starting with `Auth → Register`. No account, no code, no cloning this repo required. Full step-by-step order is in [Testing the API via Postman](#testing-the-api-via-postman) below.
 
 ---
 
@@ -34,8 +37,8 @@ This project simulates a real-world blogging platform's backend. It demonstrates
 - Designing a relational data model (Users → Posts → Comments) with proper foreign-key relationships
 - Implementing secure authentication (password hashing + JWT) from scratch, without relying on a pre-built auth service
 - Enforcing authorization rules (e.g. only a post's author can edit/delete it)
-- Structuring an Express app for **serverless** deployment (stateless handlers, connection-safe database client)
-- Shipping the project with a **public, interactive API collection** so anyone — no local setup required — can try every endpoint against the live deployment
+- Structuring a clean, layered Express app (routes → controllers → shared database client) that runs as a simple always-on service
+- Shipping the project with a **public, interactive API collection** so anyone — no local setup, no account, no code — can try every endpoint against the live deployment
 
 ## Tech Stack
 
@@ -230,16 +233,30 @@ It talks to the same `/api/*` endpoints documented above via `fetch`, so it's a 
 
 ## Testing the API via Postman
 
-A public Postman workspace is included so recruiters can test every endpoint **without cloning the repo or running anything locally**:
+You don't need to clone this repo, install anything, or write a single line of code to try this API — you can test every endpoint against the **live, running deployment** directly in your browser in about a minute.
 
-👉 `<ADD YOUR POSTMAN PUBLIC WORKSPACE LINK HERE>`
+👉 **Open the public workspace here:** `<ADD YOUR POSTMAN PUBLIC WORKSPACE LINK HERE>`
 
-The collection is pre-configured with:
-- A `{{baseUrl}}` variable pointing at the live Render deployment
-- A `{{token}}` variable that auto-populates after you run **Register** or **Login** (via a small test script), so every protected request afterward "just works"
-- Example request bodies already filled in — just hit **Send**
+**What you'll see:** the link opens a Postman workspace with a collection called "Blog CMS API," organized into three folders — Auth, Posts, Comments. Each request is already filled in with a real, working example — you just click **Send**.
 
-Suggested order to try it in: `Register` → `Create Post` → `Get All Posts` → `Add Comment` → `Get Post by ID`.
+**No Postman account needed** to view and run requests in a public workspace — just click the link and go. (If you want to save your own copy to tinker with, you can optionally sign up for a free Postman account, but it's not required just to test things.)
+
+### Recommended order to click through
+
+Since some requests depend on data created by earlier ones (like needing to be logged in before creating a post), try them in this order for the smoothest experience:
+
+1. **Auth → Register** — click Send. Creates a throwaway test account and automatically saves the login token for you — you won't need to copy/paste anything.
+2. **Posts → Get All Posts** — click Send. See the real, seeded posts already in the live database, with pagination info in the response.
+3. **Posts → Search Posts** — click Send. See keyword search working (try changing the `search` query param to any word, like `Seeded`).
+4. **Posts → Create Post** — click Send. Creates a brand new post under your test account — the response will include its real new `id`.
+5. **Posts → Get Post By Id** — click Send. Fetches the post you just created.
+6. **Comments → Add Comment** — click Send. Adds a comment to that post.
+7. **Comments → Get Comments For Post** — click Send. See your comment in the response.
+8. **Posts → Update Post** / **Posts → Delete Post** — click Send. Edit or remove the post you created (you'll get a `403 Forbidden` if you ever try this on a post you don't own — that's the ownership check working as intended, not a bug).
+
+**A note on timing:** if this is the first request in a little while, the server may take 20-40 seconds to respond on the very first click (it's hosted on a free tier that sleeps when idle) — that's expected, not an error. Every request after that first one will be instant.
+
+That's the whole test — no setup, no account, no waiting on anyone. If something doesn't behave as described above, that's useful feedback; feel free to flag it.
 
 ## Error Handling
 
