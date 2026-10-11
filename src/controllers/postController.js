@@ -1,4 +1,5 @@
-const prisma = require('../lib/prisma');
+const postModel = require('../models/postModel');
+const commentModel = require('../models/commentModel');
 const { parsePagination, buildPaginationMeta } = require('../lib/pagination');
 
 async function getAllPosts(req, res, next) {
@@ -17,17 +18,8 @@ async function getAllPosts(req, res, next) {
     };
 
     const [posts, totalCount] = await Promise.all([
-      prisma.post.findMany({
-        where,
-        include: {
-          author: { select: { id: true, name: true } },
-          _count: { select: { comments: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.post.count({ where }),
+      postModel.findMany({ where, skip, take: limit }),
+      postModel.count(where),
     ]);
 
     res.json({
@@ -43,18 +35,7 @@ async function getAllPosts(req, res, next) {
 async function getPostById(req, res, next) {
   try {
     const id = Number(req.params.id);
-    const post = await prisma.post.findUnique({
-      where: { id },
-      include: {
-        author: { select: { id: true, name: true } },
-        comments: {
-          include: { author: { select: { id: true, name: true } } },
-          orderBy: { createdAt: 'asc' },
-          take: 20, // first page of comments only — use GET /api/posts/:id/comments?page=2 for more
-        },
-        _count: { select: { comments: true } },
-      },
-    });
+    const post = await postModel.findById(id);
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
     res.json({ post });
@@ -70,13 +51,11 @@ async function createPost(req, res, next) {
       return res.status(400).json({ error: 'title and content are required' });
     }
 
-    const post = await prisma.post.create({
-      data: {
-        title,
-        content,
-        published: published !== undefined ? Boolean(published) : true,
-        authorId: req.user.id,
-      },
+    const post = await postModel.create({
+      title,
+      content,
+      published: published !== undefined ? Boolean(published) : true,
+      authorId: req.user.id,
     });
 
     res.status(201).json({ post });
@@ -88,7 +67,7 @@ async function createPost(req, res, next) {
 async function updatePost(req, res, next) {
   try {
     const id = Number(req.params.id);
-    const existing = await prisma.post.findUnique({ where: { id } });
+    const existing = await postModel.findOwnerCheckById(id);
 
     if (!existing) return res.status(404).json({ error: 'Post not found' });
     if (existing.authorId !== req.user.id) {
@@ -96,13 +75,10 @@ async function updatePost(req, res, next) {
     }
 
     const { title, content, published } = req.body;
-    const post = await prisma.post.update({
-      where: { id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(content !== undefined && { content }),
-        ...(published !== undefined && { published: Boolean(published) }),
-      },
+    const post = await postModel.update(id, {
+      ...(title !== undefined && { title }),
+      ...(content !== undefined && { content }),
+      ...(published !== undefined && { published: Boolean(published) }),
     });
 
     res.json({ post });
@@ -114,15 +90,15 @@ async function updatePost(req, res, next) {
 async function deletePost(req, res, next) {
   try {
     const id = Number(req.params.id);
-    const existing = await prisma.post.findUnique({ where: { id } });
+    const existing = await postModel.findOwnerCheckById(id);
 
     if (!existing) return res.status(404).json({ error: 'Post not found' });
     if (existing.authorId !== req.user.id) {
       return res.status(403).json({ error: 'You can only delete your own posts' });
     }
 
-    await prisma.comment.deleteMany({ where: { postId: id } });
-    await prisma.post.delete({ where: { id } });
+    await commentModel.removeAllForPost(id);
+    await postModel.remove(id);
 
     res.json({ message: 'Post deleted successfully' });
   } catch (err) {

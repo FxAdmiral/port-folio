@@ -1,6 +1,6 @@
 # Blog CMS API
 
-A full-stack blog/CMS platform — a REST API plus a working browser frontend — where users can register, log in, publish posts, and comment on each other's posts. Built with **Node.js + Express** and a **vanilla HTML/CSS/JS frontend**, deployed as an always-on web service on **Render**, backed by **PostgreSQL (Neon, or Render's own managed Postgres)** via **Prisma ORM**, secured with **JWT authentication**.
+A full-stack blog/CMS platform — a REST API plus a working browser frontend — where users can register, log in, publish posts, and comment on each other's posts. Built with **Node.js + Express** and a **vanilla HTML/CSS/JS frontend**, deployed as an always-on web service on **Render**, backed by **PostgreSQL (Neon, or Render's own managed Postgres)** via **Prisma ORM**, secured with **JWT authentication** the .env.example is just a template or you can call a dummy url which just gives you an idea of what the environment variable looks like for you to know it exist and the project has a well structured database that shows that they are soe credentials that were ignored from being pushed to .gitignore the real .env file is being ignored and wasn't pushed to github for security reasons as it ought to be.
 
 🔗 **Live API:** `<https://blogcms-api-port-folio.onrender.com>`
 📬 **Public Postman Workspace (click "Send" on any request to see live results):** `<https://documenter.getpostman.com/view/58450852/2sBYB4KSHE>`

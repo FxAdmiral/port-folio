@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const prisma = require('../lib/prisma');
+const userModel = require('../models/userModel');
 
 async function register(req, res, next) {
   try {
@@ -15,10 +15,7 @@ async function register(req, res, next) {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: { name, email, password: hashed },
-      select: { id: true, name: true, email: true, createdAt: true },
-    });
+    const user = await userModel.createUser({ name, email, password: hashed });
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: '7d',
@@ -38,7 +35,7 @@ async function login(req, res, next) {
       return res.status(400).json({ error: 'email and password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await userModel.findByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -63,10 +60,7 @@ async function login(req, res, next) {
 
 async function me(req, res, next) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { id: true, name: true, email: true, createdAt: true },
-    });
+    const user = await userModel.findSafeById(req.user.id);
     res.json({ user });
   } catch (err) {
     next(err);
